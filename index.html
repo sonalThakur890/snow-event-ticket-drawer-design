@@ -163,10 +163,6 @@
     <div class="filters">
       <span class="fchip">Service Line ⌄</span><span class="fchip">Status ⌄</span><span class="fchip">Ticket Type ⌄</span><span class="fchip">Urgency ⌄</span><span class="fchip">Activity Log ⌄</span><span class="fchip">Colors ⌄</span><span class="fchip">Contract ⌄</span><span class="fchip">Source ⌄</span><span class="fchip">Date ⌄</span><span class="fchip">Project ⌄</span>
     </div>
-    <div class="filters filters2">
-      <span id="f_event"></span><span id="f_status"></span><span id="f_region"></span><span id="f_type"></span><span id="f_precip"></span><span id="f_period"></span>
-    </div>
-    <div id="appliedchips" class="chiprow"></div>
     <table class="tbl"><thead><tr><th>Customer</th><th>Ticket</th><th>Ticket Type</th><th>Assignee</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table>
   </div>
 
@@ -238,34 +234,10 @@
   const field=(k,v)=>'<div class="fieldrow"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
   const kv=(k,v)=>'<div><div class="k">'+k+'</div><div class="val">'+v+'</div></div>';
 
-  const EVK=Object.keys(T).filter(k=>T[k].kind==='event');
-  const evOf=n=>{const t=T[n];return t.kind==='event'?t:(t.belongs?T[t.belongs]:null);};
-  const uniq=a=>Array.from(new Set(a));
-  const state={event:'all',status:'all',region:'all',type:'all',precip:'all',periodFrom:'',periodTo:''};
-  const mkSel=(key,id,label,opts)=>'<select class="fsel" id="'+id+'" onchange="setFilter(\''+key+'\',this.value,this)"><option value="all">'+label+'</option>'+opts.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('')+'</select>';
-  document.getElementById('f_event').innerHTML=mkSel('event','f_event_s','❄ Snow event',EVK.map(k=>[k,T[k].event.storm]));
-  document.getElementById('f_status').innerHTML=mkSel('status','f_status_s','Event status',[['active','Active'],['upcoming','Upcoming'],['past','Past']]);
-  document.getElementById('f_region').innerHTML=mkSel('region','f_region_s','Region',uniq(EVK.map(k=>T[k].event.region)).map(r=>[r,r]));
-  document.getElementById('f_type').innerHTML=mkSel('type','f_type_s','Event type',[['Weather','Weather'],['Fire','Fire']]);
-  document.getElementById('f_precip').innerHTML=mkSel('precip','f_precip_s','Precipitation',[['Snow','Snow'],['Freezing Rain','Freezing Rain'],['Sleet','Sleet'],['Hail','Hail'],['Flurries','Flurries']]);
-  document.getElementById('f_period').innerHTML='<span class="fdate">📅 Event period <input type="date" id="pf" onchange="setPeriod()"> – <input type="date" id="pt" onchange="setPeriod()"></span>';
-  function setFilter(key,v,el){ state[key]=v; if(el) el.value='all'; renderRows(); }
-  function setPeriod(){ const a=document.getElementById('pf'),b=document.getElementById('pt'); state.periodFrom=a?a.value:''; state.periodTo=b?b.value:''; renderRows(); }
-  function clearF(key){ if(key==='period'){ state.periodFrom=''; state.periodTo=''; const a=document.getElementById('pf'),b=document.getElementById('pt'); if(a)a.value=''; if(b)b.value=''; } else { state[key]='all'; } renderRows(); }
-  const chipLabel={event:s=>'❄ '+T[s].event.storm, status:s=>({active:'Active',upcoming:'Upcoming',past:'Past'}[s]), region:s=>s, type:s=>s, precip:s=>s};
-  const chip=(label,k)=>'<span class="achip">'+label+'<span class="x" onclick="clearF(\''+k+'\')">✕</span></span>';
-  function chipsHTML(){ let c=['event','status','region','type','precip'].filter(k=>state[k]!=='all').map(k=>chip(chipLabel[k](state[k]),k)).join('');
-    if(state.periodFrom||state.periodTo){ c+=chip('Event period: '+(state.periodFrom||'…')+' – '+(state.periodTo||'…'),'period'); } return c; }
   function renderRows(){
-    const fe=state.event,fs=state.status,fr=state.region,ft=state.type,fp=state.precip;
-    document.getElementById('appliedchips').innerHTML=chipsHTML();
-    const rows=listing.filter(function(n){const ev=evOf(n); if(!ev)return false; const e=ev.event; const eid=EVK.find(k=>T[k]===ev);
-      return (fe==='all'||eid===fe)&&(fs==='all'||e.phase===fs)&&(fr==='all'||e.region===fr)&&(ft==='all'||e.etype===ft)&&(fp==='all'||e.precip===fp)
-        &&(!state.periodFrom||(e.eD||'9999')>=state.periodFrom)&&(!state.periodTo||(e.sD||'0000')<=state.periodTo);});
-    document.getElementById('rows').innerHTML=rows.map(function(n){const t=T[n];
+    document.getElementById('rows').innerHTML=listing.map(function(n){const t=T[n];
       return '<tr class="click" onclick="openTicket(\''+n+'\')"><td><div class="cust">'+t.customer+'</div><div class="sub">'+t.acct+' - '+t.addr+'</div></td>'+
-        '<td><span class="tnum">'+n+'</span>'+shortTag(t)+'</td><td>'+ttype(t.type)+'</td><td>'+t.assignee+'</td><td>'+stat(t.status)+'</td></tr>';}).join('')
-      || '<tr><td colspan="5" style="padding:20px;color:var(--muted)">No tickets match these filters.</td></tr>';
+        '<td><span class="tnum">'+n+'</span>'+shortTag(t)+'</td><td>'+ttype(t.type)+'</td><td>'+t.assignee+'</td><td>'+stat(t.status)+'</td></tr>';}).join('');
   }
   renderRows();
 
