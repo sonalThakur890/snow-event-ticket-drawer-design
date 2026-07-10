@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Snow Event Ticket — full ops-dashboard details drawer</title>
+<style>
+  :root{
+    --dmg:#1f4e79; --dmg-dark:#163a5c; --link:#1565c0;
+    --bg:#f4f6f8; --card:#fff; --border:#e3e7ec; --line:#eef1f4;
+    --text:#1f2733; --muted:#6b7785; --faint:#8b97a6;
+    --green:#2e9e5b; --amber:#e2a400; --grey:#5b6675; --snow:#2a7de1; --snow-bg:#e8f1fc;
+    --purple:#6a3fb5; --track:#b23b3b; --shadow:0 1px 3px rgba(20,40,70,.08),0 1px 2px rgba(20,40,70,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;}
+  a{color:var(--link);text-decoration:none;font-weight:600;cursor:pointer;} a:hover{text-decoration:underline;}
+
+  .appbar{height:54px;background:var(--dmg);display:flex;align-items:center;gap:14px;padding:0 20px;color:#fff;}
+  .appbar .logo{font-weight:800;letter-spacing:.06em;border:2px solid #fff;border-radius:4px;padding:1px 6px;font-size:12px;}
+  .appbar .who{margin-left:auto;text-align:right;font-size:12px;} .appbar .who b{display:block;font-size:13px;}
+
+  .page{padding:22px 26px;}
+  .page h1{font-size:22px;margin:0 0 4px;color:var(--dmg-dark);}
+  .hint{color:var(--muted);font-size:13px;margin:0 0 16px;max-width:940px;}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .fchip{border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 12px;font-size:12.5px;}
+  .fchip.on{border-color:var(--snow);background:var(--snow-bg);color:var(--snow);font-weight:600;}
+  .fsel{border:1px solid var(--snow);background:var(--snow-bg);color:var(--snow);border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .evsum{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,#eef5fd,#fbfdff);border:1px solid #cfe0f5;border-radius:10px;padding:12px 16px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .evsum .es-title{font-weight:700;color:var(--dmg-dark);}
+  .es-chip{font-size:12px;background:#fff;border:1px solid #cfe0f5;border-radius:20px;padding:3px 10px;color:var(--dmg);font-weight:600;}
+  .es-chip.warn{background:#fbeceb;border-color:#eccaca;color:#c62f2f;} .es-chip.amber{background:#fdf2e2;border-color:#f0e6cf;color:var(--amber);}
+  .es-plan{font-size:12px;} .es-open{margin-left:auto;font-size:12.5px;font-weight:600;}
+  .chiprow{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+  .achip{display:inline-flex;align-items:center;gap:9px;background:var(--dmg);color:#fff;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;}
+  .achip .x{cursor:pointer;opacity:.85;font-weight:700;} .achip .x:hover{opacity:1;}
+  .fdate{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--snow);background:var(--snow-bg);color:var(--snow);border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:600;}
+  .fdate input{border:1px solid #cfe0f5;border-radius:6px;padding:3px 6px;font-size:12px;color:var(--text);}
+  .filters2{margin-top:-4px;padding-top:10px;border-top:1px dashed var(--border);}
+  .frowlbl{font-size:12px;color:var(--snow);font-weight:700;align-self:center;margin-right:2px;}
+  .tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);}
+  .tbl th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700;padding:12px 16px;border-bottom:1px solid var(--border);background:#fafbfc;}
+  .tbl td{padding:13px 16px;border-bottom:1px solid var(--line);} .tbl tr:last-child td{border-bottom:none;}
+  .tbl tr.click{cursor:pointer;} .tbl tr.click:hover td{background:#f6f9fc;}
+  .cust{font-weight:600;} .sub{font-size:12px;color:var(--muted);} .tnum{font-weight:600;color:var(--link);}
+  .ptag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:12px;margin-left:6px;vertical-align:middle;}
+  .ptag.event{background:var(--snow-bg);color:var(--snow);} .ptag.tij{background:#e2f4f5;color:#0a7c84;} .ptag.bill{background:#fdf2e2;color:var(--amber);} .ptag.plain{background:#eef1f4;color:#46536b;}
+  .ttype{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:16px;background:#eef1f4;color:#46536b;white-space:nowrap;}
+  .ttype.event{background:var(--snow-bg);color:var(--snow);}
+  .status{font-size:13px;font-weight:600;} .st-ver{color:var(--link);} .st-closed{color:var(--grey);} .st-prog{color:var(--amber);} .st-done{color:var(--green);} .st-open{color:var(--grey);}
+  .acard2.inv{border-color:#f0e6cf;background:#fffdf6;}
+
+  /* drawer */
+  .backdrop{position:fixed;inset:0;background:rgba(15,27,42,.42);opacity:0;pointer-events:none;transition:opacity .2s;z-index:100;}
+  .backdrop.show{opacity:1;pointer-events:auto;}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:min(1200px,92vw);background:var(--bg);box-shadow:-8px 0 30px rgba(20,40,70,.18);transform:translateX(100%);transition:transform .25s ease;z-index:101;display:flex;flex-direction:column;}
+  .drawer.show{transform:none;}
+  .closetab{position:absolute;left:-30px;top:70px;width:30px;background:#fff;border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;padding:12px 0;text-align:center;cursor:pointer;box-shadow:var(--shadow);}
+  .closetab .x{font-size:14px;color:var(--text);display:block;margin-bottom:6px;} .closetab .v{writing-mode:vertical-rl;transform:rotate(180deg);color:var(--muted);font-size:12px;}
+  .dhead{display:flex;align-items:center;gap:12px;padding:15px 26px;background:#fff;border-bottom:1px solid var(--border);}
+  .crumb{color:var(--muted);font-size:15px;} .crumb b{color:var(--dmg-dark);}
+  .btn{margin-left:auto;background:var(--dmg);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;}
+  .kebab{color:var(--faint);font-size:20px;cursor:pointer;}
+  .dbody{overflow:auto;padding:20px 26px 70px;}
+
+  .hcard{background:#fff;border:1px solid var(--border);border-radius:10px;display:grid;grid-template-columns:300px 1fr;box-shadow:var(--shadow);}
+  .hcard .left{padding:16px 22px;border-right:1px solid var(--border);}
+  .hcard .cn{font-weight:700;font-size:16px;color:var(--dmg-dark);} .hcard .acct{color:var(--muted);font-weight:600;font-size:14px;}
+  .hcard .addr{color:var(--muted);font-size:12.5px;margin-top:10px;}
+  .kv{padding:16px 22px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px 24px;}
+  @media(max-width:960px){.kv{grid-template-columns:repeat(2,1fr)}.hcard{grid-template-columns:1fr}.hcard .left{border-right:none;border-bottom:1px solid var(--border)}}
+  .k{font-size:12px;color:var(--faint);} .val{font-weight:600;margin-top:3px;}
+  .scope{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 22px;margin-top:14px;box-shadow:var(--shadow);}
+
+  .sec{margin-top:22px;} .sec h3{font-size:18px;margin:0 0 12px;color:var(--dmg-dark);font-weight:700;}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;} @media(max-width:860px){.cols{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);}
+  .card .hd{display:flex;justify-content:space-between;padding:14px 18px 0;font-size:13px;color:var(--muted);font-weight:600;}
+  .card .bd{padding:8px 18px 16px;}
+  .fieldrow{margin-top:10px;} .fieldrow .k{font-size:12px;color:var(--faint);} .fieldrow .v{font-weight:600;margin-top:2px;}
+  .biglink{font-size:15px;}
+  .acard{background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);margin-bottom:12px;cursor:pointer;transition:box-shadow .12s,border-color .12s;}
+  .acard:hover{box-shadow:0 4px 14px rgba(20,40,70,.12);border-color:var(--dmg);}
+  .prov{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;} .prov .k{font-size:12px;color:var(--faint);}
+  .openhint{font-size:11.5px;color:var(--snow);font-weight:600;margin-top:8px;}
+  /* horizontal associates band (matches current product) */
+  .assocband{display:flex;gap:28px;align-items:flex-start;overflow-x:auto;padding-bottom:6px;}
+  .agroup{flex:none;} .agroup h3{margin:0 0 12px;}
+  .acardrow{display:flex;gap:16px;align-items:stretch;}
+  .acard2{background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;min-width:252px;max-width:300px;}
+  .acard2.clk{cursor:pointer;transition:box-shadow .12s,border-color .12s;}
+  .acard2.clk:hover{box-shadow:0 4px 14px rgba(20,40,70,.12);border-color:var(--dmg);}
+  .acard2 .ah{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-weight:600;}
+  .acard2 .al{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .ctxchip{display:inline-flex;align-items:center;gap:8px;background:var(--snow-bg);border:1px solid #cfe0f5;border-radius:9px;padding:10px 14px;margin-bottom:14px;cursor:pointer;font-size:13px;}
+  .actlog{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:18px;box-shadow:var(--shadow);}
+  .actlog .flag{color:var(--purple);font-size:18px;} .actlog .txt{font-size:13px;} .actlog .obtn{margin-left:auto;border:1px solid var(--link);color:var(--link);background:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;}
+
+  /* stage tracker */
+  .stagewrap{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px 18px 6px;box-shadow:var(--shadow);overflow-x:auto;}
+  .stages{display:flex;min-width:640px;}
+  .stg{flex:1;text-align:center;position:relative;}
+  .stg .bar{position:absolute;top:15px;left:-50%;width:100%;height:4px;background:var(--track);z-index:0;}
+  .stg:first-child .bar{display:none;}
+  .stg .bar.todo{background:#dfe4ea;}
+  .stg .node{position:relative;z-index:1;width:32px;height:32px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;}
+  .stg .node.done{background:var(--green);} .stg .node.now{background:var(--amber);} .stg .node.todo{background:#c2cad4;}
+  .stg .nm{font-size:13px;margin-top:8px;color:var(--text);} .stg.cur .nm{color:var(--dmg);font-weight:700;border-bottom:2px solid var(--dmg);padding-bottom:8px;display:inline-block;}
+  .stg .subt{font-size:11px;color:var(--muted);margin-top:2px;}
+  .tasktbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;}
+  .tasktbl th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:12px 18px;border-bottom:1px solid var(--line);}
+  .tasktbl td{padding:14px 18px;} .tasktbl tr.hl td{background:#eaf3fb;}
+  .todo-dot::before{content:"● ";color:var(--amber);}
+
+  /* details + timeline */
+  .dt-tabs{display:flex;border-bottom:1px solid var(--border);}
+  .dt-tabs .tb{padding:12px 22px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-size:18px;}
+  .dt-tabs .tb.on{color:var(--dmg);border-bottom-color:var(--dmg);}
+  .tl-tabs{display:flex;border-bottom:1px solid var(--border);}
+  .tl-tabs .tb{flex:1;text-align:center;padding:13px;cursor:pointer;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;}
+  .tl-tabs .tb.on{color:var(--dmg);border-bottom-color:var(--dmg);}
+  .tabpanel{display:none;} .tabpanel.on{display:block;}
+  .dl{padding:16px 4px;} .dl .row{display:grid;grid-template-columns:180px 1fr;gap:8px;padding:8px 14px;}
+  .dl .row .k{color:var(--muted);font-weight:600;font-size:13px;} .dl .row .v{font-weight:600;}
+  .dl .sub{grid-column:1/3;}
+  .att{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;margin:10px 14px;}
+  .att .ic{color:#c0392b;font-weight:800;font-size:12px;}
+  .tl{padding:8px 6px;} .tlrow{display:flex;gap:12px;padding:12px 10px;position:relative;}
+  .tlrow:not(:last-child)::before{content:"";position:absolute;left:22px;top:34px;bottom:-8px;width:2px;background:#e3e7ec;}
+  .tlrow .ic{width:30px;height:30px;border-radius:7px;background:#fdece2;color:#e07b39;display:flex;align-items:center;justify-content:center;flex:none;z-index:1;font-size:14px;}
+  .tlrow .ic.av{background:#efe9fa;color:var(--purple);font-weight:700;font-size:12px;}
+  .tlrow .body{flex:1;} .tlrow .t1{font-size:13px;} .tlrow .t2{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .tlrow .rt{font-size:11.5px;color:var(--faint);white-space:nowrap;}
+  .flagbox{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px;font-size:13px;color:var(--muted);}
+  .muted{color:var(--muted);} .faint{color:var(--faint);font-size:12px;}
+  .tipbar{position:fixed;bottom:14px;left:26px;background:var(--dmg-dark);color:#fff;font-size:12px;padding:7px 14px;border-radius:20px;z-index:200;opacity:.9;}
+  /* snow event detail card sits inside Ticket Details tab */
+  .evbox{margin:6px 14px 4px;border:1px solid #cfe0f5;background:var(--snow-bg);border-radius:9px;padding:12px 14px;}
+  .evbox .t{font-weight:700;color:var(--dmg-dark);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .evgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;} .evgrid .k{font-size:12px;color:var(--faint);} .evgrid .v{font-weight:600;}
+  /* refined event details card */
+  .evcard{margin:8px 14px 4px;border:1px solid #cfe0f5;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 2px 10px rgba(42,125,225,.08);}
+  .ev-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,#e6f0fc,#f7fbff);border-bottom:1px solid #dbe8f6;}
+  .ev-ico{display:flex;align-items:center;justify-content:center;font-size:26px;flex:none;}
+  .ev-htxt{flex:1;min-width:0;} .ev-storm{font-weight:700;color:var(--dmg-dark);font-size:15px;} .ev-win{font-size:12px;color:var(--muted);margin-top:2px;}
+  .ev-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .evbadge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--snow);color:#fff;white-space:nowrap;}
+  .evbadge.ghost{background:#fff;border:1px solid #cfe0f5;color:var(--snow);}
+  .ev-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#e6eef8;}
+  .ev-stat{background:#fff;padding:12px 15px;} .ev-stat .sl{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;} .ev-stat .sv{font-weight:700;font-size:15px;color:var(--dmg-dark);margin-top:3px;} .ev-stat .sv.snow{color:var(--snow);}
+  @media(max-width:640px){.ev-stats{grid-template-columns:1fr}}
+  .ev-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px 22px;padding:14px 16px;} .ev-meta .k{font-size:11.5px;color:var(--faint);} .ev-meta .v{font-weight:600;margin-top:2px;}
+  .ev-plan{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px dashed #cfe0f5;background:#fafcff;} .ev-plan-lbl{font-size:12px;color:var(--dmg-dark);font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="appbar"><span class="logo">DMG</span><span style="font-weight:600">Control Center</span>
+    <span class="who"><b>Sonal Kumari Thakur</b>Product Leader</span></div>
+
+  <div class="page">
+    <h1>Operations Dashboard</h1>
+    <p class="hint">Faithful to the <b>existing ops-dashboard ticket drawer</b> — full page: header, Scope, <b>Ticket + Associates</b> cards, Activity Log, <b>Tasks stage tracker</b>, and the <b>Ticket Details / Timeline</b> section. Snow additions (least effort, on-pattern): <b>Snow Event</b> tag, <b>event start/end + storm</b> inside Ticket Details, <b>event plan</b> as PDF (Attachments) + hyperlink, and the Associates card lists linked <b>TIJ tickets</b> — click one to open its drawer on top.</p>
+    <div class="filters">
+      <span class="fchip">Service Line ⌄</span><span class="fchip">Status ⌄</span><span class="fchip">Ticket Type ⌄</span><span class="fchip">Urgency ⌄</span><span class="fchip">Activity Log ⌄</span><span class="fchip">Colors ⌄</span><span class="fchip">Contract ⌄</span><span class="fchip">Source ⌄</span><span class="fchip">Date ⌄</span><span class="fchip">Project ⌄</span>
+    </div>
+    <div class="filters filters2">
+      <span id="f_event"></span><span id="f_status"></span><span id="f_region"></span><span id="f_type"></span><span id="f_precip"></span><span id="f_period"></span>
+    </div>
+    <div id="appliedchips" class="chiprow"></div>
+    <table class="tbl"><thead><tr><th>Customer</th><th>Ticket</th><th>Ticket Type</th><th>Assignee</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table>
+  </div>
+
+  <div class="backdrop" id="backdrop" onclick="closeTop()"></div>
+  <div id="drawers"></div>
+
+<script>
+  const std=[['Qualification','✓','done'],['Matching','✓','done'],['Arrival On Site','🕐','done'],['Work Completion','🔧','done'],['Verification','✓','done','1/1 tasks completed'],['Invoice & Payments','🧾','now','0/1 tasks completed']];
+  const evLC=[['Forecast','✓','done'],['Event Created','✓','done'],['In Event Window','❄','now','linking visits'],['Reconcile','⇄','todo'],['Closed','✓','todo']];
+  const evLCup=[['Forecast','✓','done'],['Event Created','❄','now','awaiting window'],['In Event Window','','todo'],['Reconcile','','todo'],['Closed','','todo']];
+
+  const T={
+    'TKT-260124-SNOW':{kind:'event',type:['event','❄ Snow Event'],status:['st-prog','In Progress'],
+      customer:'Acme Retail Group',acct:'#PEP-6670',addr:'1200 Commerce Dr, Roanoke, VA 41091',
+      wo:'—',arrive:'Jan 24, 2026 06:00 EST',assignee:'Alex Carter',urgency:'Normal',nte:'$—',
+      sl:'Snow Removal',st:'Snow Removal',life:'Active · In Event Window',
+      scope:'SNOW REMOVAL — property-wide plow + salt per contract triggers ($200 @ 4in, $250 @ 6in). Window Jan 24–28, 2026.',
+      stages:evLC, task:['Link check-in visits','To Do','Scheduler','Normal'],
+      event:{eventId:'CE-260124-0001',type:'Snow',catType:'Weather',precip:'Snow',storm:'Winter Storm "Elliot"',start:'Jan 24, 2026 06:00 EST',end:'Jan 28, 2026 18:00 EST',sD:'2026-01-24',eD:'2026-01-28',expected:'6–10 in',actual:'7.4 in (certified · WeatherWorks)',coverage:'3 properties · ZIPs 41091, 41092',region:'Southeast · VA',declaredBy:'Ops (NAT)',declaredMode:'System (auto-forecast)',phase:'active',etype:'Weather',unmatched:'1 check-in pending',plan:{pdf:'Elliot_Snow_Response_Plan.pdf',link:'Storm plan (SharePoint)'}},
+      details:{'Service Line':'Snow Removal','Service Type':'Snow Removal','Ticket Type':'Snow Event','Term Sheet Linked':'<a>R25-000000DS</a>','Customer NTE':'$—'},
+      invoice:{num:'INV-260124-0001',status:['st-open','Open'],nte:'$250',sl:'Snow Removal / Snow Removal'},
+      assoc:['TKT-260124-1001','TKT-260125-1002','TKT-260126-1003'],
+      timeline:[['State','Event ticket created from CatEvent (Winter Storm Elliot) forecast.','Jan 24, 2026 · 06:02 EST','Event'],
+                ['State','TIJ TKT-260124-1001 linked to event (property match).','Jan 24, 2026 · 14:10 EST','Linking'],
+                ['State','Forecast updated — window extended to Jan 28.','Jan 25, 2026 · 08:00 EST','Event']]},
+    'TKT-260210-SNOW':{kind:'event',type:['event','❄ Snow Event'],status:['st-open','Upcoming'],
+      customer:'Summit Grocers',acct:'#KR-2210',addr:'450 Meridian Blvd, Columbus, OH 43240',
+      wo:'—',arrive:'Feb 10, 2026 04:00 EST',assignee:'Sam Rivera',urgency:'Normal',nte:'$—',
+      sl:'Snow Removal',st:'Snow Removal',life:'Forecast · Upcoming',
+      scope:'SNOW REMOVAL — forecast event; provider pre-treat expected. Window Feb 10–12, 2026.',
+      stages:evLCup, task:['Await event window','To Do','Scheduler','Normal'],
+      event:{eventId:'CE-260210-0002',type:'Snow',catType:'Weather',precip:'Snow',storm:'Winter Storm "Finn"',start:'Feb 10, 2026 04:00 EST',end:'Feb 12, 2026 20:00 EST',sD:'2026-02-10',eD:'2026-02-12',expected:'3–5 in',actual:'— (pre-event)',coverage:'5 properties · ZIPs 43240, 43235',region:'Midwest · OH',declaredBy:'System',declaredMode:'System (auto-forecast)',phase:'upcoming',etype:'Weather',unmatched:'—',plan:{pdf:'Finn_Snow_Response_Plan.pdf',link:'Storm plan (SharePoint)'}},
+      details:{'Service Line':'Snow Removal','Service Type':'Snow Removal','Ticket Type':'Snow Event','Customer NTE':'$—'},
+      assoc:[], timeline:[['State','Event ticket created from CatEvent (Winter Storm Finn) forecast.','Feb 08, 2026 · 09:00 EST','Event']]},
+
+    'TKT-260124-1001':{kind:'tij',type:['plain','Non Routine (Snow)'],status:['st-prog','In Progress'],belongs:'TKT-260124-SNOW',
+      customer:'Acme Retail Group',acct:'#PEP-6670',addr:'1200 Commerce Dr, Roanoke, VA 41091',
+      wo:'WO-260124-1001',arrive:'Jan 24, 2026',assignee:'Alex Carter',urgency:'Normal',nte:'$—',
+      sl:'Snow Removal',st:'Snow Removal',life:'Verification',scope:'Check-in visit — plow + salt (Jan 24).',
+      stages:std, task:['Customer Invoice Builder','To Do','Alex Carter','Normal'],
+      job:'JOB-260124-1001',jobStatus:['st-prog','In Progress'],prov:{name:"Northpine Land Services, Inc.",email:'contact@northpine-services.example'},
+      details:{'Service Line':'Snow Removal','Service Type':'Snow Removal','Ticket Type':'Tracking And Billing','Work Order Number':'WO-260124-1001','Customer NTE':'$—'},
+      assoc:[], timeline:[['State','Status IN_PROGRESS → WORK_COMPLETED.','Jan 24, 2026 · 13:17 EST','Ticket Modification'],
+                ['State','TECHNICIAN_CHECKED_IN → CHECKED_OUT.','Jan 24, 2026 · 13:17 EST','Ticket Modification'],
+                ['av','Alex Carter added activity log.','Jan 24, 2026 · 12:40 EST','Activity logs','Provider on site']]},
+    'TKT-260125-1002':{kind:'tij',type:['plain','Non Routine (Snow)'],status:['st-closed','Closed'],belongs:'TKT-260124-SNOW',
+      customer:'Acme Retail Group',acct:'#PEP-6670',addr:'1200 Commerce Dr, Roanoke, VA 41091',
+      wo:'WO-260125-1002',arrive:'Jan 25, 2026',assignee:'Alex Carter',urgency:'Normal',nte:'$—',
+      sl:'Snow Removal',st:'Snow Removal',life:'Closed',scope:'Check-in visit — plow (Jan 25).',
+      stages:std, task:['Customer Invoice Builder','Done','Alex Carter','Normal'],
+      job:'JOB-260125-1002',jobStatus:['st-closed','Closed'],prov:{name:"Northpine Land Services, Inc.",email:'contact@northpine-services.example'},
+      details:{'Service Line':'Snow Removal','Service Type':'Snow Removal','Ticket Type':'Tracking And Billing','Work Order Number':'WO-260125-1002','Customer NTE':'$—'},
+      assoc:[], timeline:[['State','Status WORK_COMPLETED → WORK_VERIFIED.','Jan 25, 2026 · 15:02 EST','Ticket Modification']]},
+    'TKT-260126-1003':{kind:'tij',type:['plain','Non Routine (Snow)'],status:['st-closed','Closed'],belongs:'TKT-260124-SNOW',
+      customer:'Acme Retail Group',acct:'#PEP-6670',addr:'1200 Commerce Dr, Roanoke, VA 41091',
+      wo:'WO-260126-1003',arrive:'Jan 26, 2026',assignee:'Alex Carter',urgency:'Normal',nte:'$—',
+      sl:'Snow Removal',st:'Snow Removal',life:'Closed',scope:'Check-in visit — salt (Jan 26).',
+      stages:std, task:['Customer Invoice Builder','Done','Alex Carter','Normal'],
+      job:'JOB-260126-1003',jobStatus:['st-closed','Closed'],prov:{name:"Northpine Land Services, Inc.",email:'contact@northpine-services.example'},
+      details:{'Service Line':'Snow Removal','Service Type':'Snow Removal','Ticket Type':'Tracking And Billing','Work Order Number':'WO-260126-1003','Customer NTE':'$—'},
+      assoc:[], timeline:[['State','Status WORK_COMPLETED → WORK_VERIFIED.','Jan 26, 2026 · 16:20 EST','Ticket Modification']]}
+  };
+  const listing=['TKT-260124-SNOW','TKT-260124-1001','TKT-260125-1002','TKT-260126-1003','TKT-260210-SNOW'];
+
+  const ttype=t=>'<span class="ttype '+(t[0]==='event'?'event':'')+'">'+t[1]+'</span>';
+  const shortMap={event:['event','❄ Event'],tij:['tij','TIJ'],billing:['bill','Billing']};
+  const shortTag=t=>{const x=shortMap[t.kind]||['plain','Ticket'];return '<span class="ptag '+x[0]+'">'+x[1]+'</span>';};
+  const stat=s=>'<span class="status '+s[0]+'">'+s[1]+'</span>';
+  const field=(k,v)=>'<div class="fieldrow"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
+  const kv=(k,v)=>'<div><div class="k">'+k+'</div><div class="val">'+v+'</div></div>';
+
+  const EVK=Object.keys(T).filter(k=>T[k].kind==='event');
+  const evOf=n=>{const t=T[n];return t.kind==='event'?t:(t.belongs?T[t.belongs]:null);};
+  const uniq=a=>Array.from(new Set(a));
+  const state={event:'all',status:'all',region:'all',type:'all',precip:'all',periodFrom:'',periodTo:''};
+  const mkSel=(key,id,label,opts)=>'<select class="fsel" id="'+id+'" onchange="setFilter(\''+key+'\',this.value,this)"><option value="all">'+label+'</option>'+opts.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('')+'</select>';
+  document.getElementById('f_event').innerHTML=mkSel('event','f_event_s','❄ Snow event',EVK.map(k=>[k,T[k].event.storm]));
+  document.getElementById('f_status').innerHTML=mkSel('status','f_status_s','Event status',[['active','Active'],['upcoming','Upcoming'],['past','Past']]);
+  document.getElementById('f_region').innerHTML=mkSel('region','f_region_s','Region',uniq(EVK.map(k=>T[k].event.region)).map(r=>[r,r]));
+  document.getElementById('f_type').innerHTML=mkSel('type','f_type_s','Event type',[['Weather','Weather'],['Fire','Fire']]);
+  document.getElementById('f_precip').innerHTML=mkSel('precip','f_precip_s','Precipitation',[['Snow','Snow'],['Freezing Rain','Freezing Rain'],['Sleet','Sleet'],['Hail','Hail'],['Flurries','Flurries']]);
+  document.getElementById('f_period').innerHTML='<span class="fdate">📅 Event period <input type="date" id="pf" onchange="setPeriod()"> – <input type="date" id="pt" onchange="setPeriod()"></span>';
+  function setFilter(key,v,el){ state[key]=v; if(el) el.value='all'; renderRows(); }
+  function setPeriod(){ const a=document.getElementById('pf'),b=document.getElementById('pt'); state.periodFrom=a?a.value:''; state.periodTo=b?b.value:''; renderRows(); }
+  function clearF(key){ if(key==='period'){ state.periodFrom=''; state.periodTo=''; const a=document.getElementById('pf'),b=document.getElementById('pt'); if(a)a.value=''; if(b)b.value=''; } else { state[key]='all'; } renderRows(); }
+  const chipLabel={event:s=>'❄ '+T[s].event.storm, status:s=>({active:'Active',upcoming:'Upcoming',past:'Past'}[s]), region:s=>s, type:s=>s, precip:s=>s};
+  const chip=(label,k)=>'<span class="achip">'+label+'<span class="x" onclick="clearF(\''+k+'\')">✕</span></span>';
+  function chipsHTML(){ let c=['event','status','region','type','precip'].filter(k=>state[k]!=='all').map(k=>chip(chipLabel[k](state[k]),k)).join('');
+    if(state.periodFrom||state.periodTo){ c+=chip('Event period: '+(state.periodFrom||'…')+' – '+(state.periodTo||'…'),'period'); } return c; }
+  function renderRows(){
+    const fe=state.event,fs=state.status,fr=state.region,ft=state.type,fp=state.precip;
+    document.getElementById('appliedchips').innerHTML=chipsHTML();
+    const rows=listing.filter(function(n){const ev=evOf(n); if(!ev)return false; const e=ev.event; const eid=EVK.find(k=>T[k]===ev);
+      return (fe==='all'||eid===fe)&&(fs==='all'||e.phase===fs)&&(fr==='all'||e.region===fr)&&(ft==='all'||e.etype===ft)&&(fp==='all'||e.precip===fp)
+        &&(!state.periodFrom||(e.eD||'9999')>=state.periodFrom)&&(!state.periodTo||(e.sD||'0000')<=state.periodTo);});
+    document.getElementById('rows').innerHTML=rows.map(function(n){const t=T[n];
+      return '<tr class="click" onclick="openTicket(\''+n+'\')"><td><div class="cust">'+t.customer+'</div><div class="sub">'+t.addr+'</div></td>'+
+        '<td><span class="tnum">'+n+'</span>'+shortTag(t)+'</td><td>'+ttype(t.type)+'</td><td>'+t.assignee+'</td><td>'+stat(t.status)+'</td></tr>';}).join('')
+      || '<tr><td colspan="5" style="padding:20px;color:var(--muted)">No tickets match these filters.</td></tr>';
+  }
+  renderRows();
+
+  let stack=[], did=0;
+  function openTicket(n){const t=T[n]; if(!t) return; did++;
+    const d=document.createElement('div'); d.className='drawer'; d.style.zIndex=101+stack.length*2; d.innerHTML=drawerHTML(n,t,did);
+    document.getElementById('drawers').appendChild(d);
+    const b=document.getElementById('backdrop'); b.classList.add('show'); b.style.zIndex=100+stack.length*2;
+    stack.push(d); requestAnimationFrame(()=>d.classList.add('show'));
+  }
+  function closeTop(){const d=stack.pop(); if(!d) return; d.classList.remove('show'); setTimeout(()=>d.remove(),250);
+    const b=document.getElementById('backdrop'); if(stack.length===0) b.classList.remove('show'); else b.style.zIndex=100+(stack.length-1)*2;}
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTop();});
+  function showTab(grp,key,btn){const wrap=btn.closest('.tabgroup');
+    wrap.querySelectorAll('[data-tb]').forEach(b=>b.classList.toggle('on',b.dataset.tb===key));
+    wrap.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('on',p.dataset.key===key));}
+
+  function stagesHTML(stages){let cur=stages.findIndex(s=>s[2]==='now'); if(cur<0)cur=stages.length-1;
+    return '<div class="stages">'+stages.map(function(s,i){
+      const cls=s[2]; const barcls=(i<=cur? '':'todo');
+      return '<div class="stg '+(i===cur?'cur':'')+'"><div class="bar '+barcls+'"></div><div class="node '+cls+'">'+s[1]+'</div><div class="nm">'+s[0]+'</div>'+(s[3]?'<div class="subt">'+s[3]+'</div>':'')+'</div>';
+    }).join('')+'</div>';}
+
+  function timelineHTML(rows){return '<div class="tl">'+rows.map(function(r){
+    const av=r[0]==='av';
+    return '<div class="tlrow"><div class="ic '+(av?'av':'')+'">'+(av?'AK':'▤')+'</div><div class="body"><div class="t1">'+r[1]+'</div><div class="t2">'+r[2]+'</div>'+(r[4]?'<div class="flagbox">'+r[4]+'</div>':'')+'</div><div class="rt">'+r[3]+'</div></div>';
+  }).join('')+'</div>';}
+
+  function drawerHTML(n,t,id){
+    let h='<div class="closetab" onclick="closeTop()"><span class="x">✕</span><span class="v">Close</span></div>';
+    h+='<div class="dhead"><span class="crumb">Operations Dashboard / <b>'+n+'</b></span> '+ttype(t.type)+'<button class="btn">Raise a Request</button><span class="kebab">⋮</span></div><div class="dbody">';
+    // header card
+    h+='<div class="hcard"><div class="left"><div class="cn">'+t.customer+' <span class="acct">'+t.acct+'</span></div><div class="addr">📍 '+t.addr+'</div></div><div class="kv">'+
+       kv('Ticket Number',n)+kv('Work Order Number',t.wo)+kv('Customer Arrive Before Date',t.arrive)+kv('Assignee',t.assignee)+
+       kv('Urgency',t.urgency)+kv('Customer NTE',t.nte)+kv('Service Line &amp; Type',t.sl+'<br><span class="muted">'+t.st+'</span>')+kv('Life Cycle Stage',t.life)+'</div></div>';
+    h+='<div class="scope"><div class="k">Scope</div><div style="margin-top:4px">'+t.scope+'</div></div>';
+    // event context chip (children)
+    if(t.belongs){const p=T[t.belongs];h+='<div class="sec"><div class="ctxchip" onclick="openTicket(\''+t.belongs+'\')">❄️ <span class="muted">Part of Snow Event</span> <b style="color:var(--link)">'+t.belongs+'</b> · '+p.event.storm+' <span class="openhint" style="margin:0 0 0 6px">Open event ▸</span></div></div>';}
+    // Ticket + Associates — horizontal band (matches current product)
+    const acount=t.kind==='event'?(t.assoc.length+(t.invoice?1:0)):(t.job?1:0);
+    h+='<div class="sec"><div class="assocband">';
+    h+='<div class="agroup"><h3>Ticket</h3><div class="acardrow"><div class="acard2 tk"><div class="ah"><span>Ticket</span><span>Status</span></div><div class="al"><a class="biglink">'+n+'</a>'+stat(t.status)+'</div>'+field('Customer NTE',t.nte)+field('Urgency',t.urgency)+'</div></div></div>';
+    h+='<div class="agroup"><h3>Associates ('+acount+')</h3><div class="acardrow">';
+    if(t.job){h+='<div class="acard2"><div class="ah"><span>Work</span><span>Status</span></div><div class="al"><a class="biglink">'+t.job+'</a>'+stat(t.jobStatus)+'</div><div class="prov"><div class="k">Provider Contact</div>'+t.prov.name+'<br><a>'+t.prov.email+'</a></div></div>';}
+    if(t.kind==='event'){t.assoc.forEach(function(an){const a=T[an];
+      h+='<div class="acard2 clk" onclick="openTicket(\''+an+'\')"><div class="ah"><span>Technician-Initiated Ticket</span><span>Status</span></div><div class="al"><a class="biglink">'+an+'</a>'+stat(a.status)+'</div>'+field('Work',a.job)+'<div class="prov"><div class="k">Provider Contact</div>'+a.prov.name+'</div><div class="openhint">Open in drawer ▸</div></div>';});}
+    if(t.kind==='event'&&t.invoice){const iv=t.invoice;
+      h+='<div class="acard2 inv"><div class="ah"><span>Invoice</span><span>Status</span></div><div class="al"><a class="biglink">'+iv.num+'</a>'+stat(iv.status)+'</div>'+field('Customer NTE',iv.nte)+field('Service Line & Type',iv.sl)+'<div class="faint" style="margin-top:8px">Customer invoice — on this event ticket (no separate billing ticket)</div></div>';}
+    h+='</div></div>';
+    h+='</div></div>';
+    // activity log
+    h+='<div class="actlog"><span class="flag">⚑</span><div class="txt"><b>Activity Log:</b> Alex Carter — from '+n+' — 1 day ago<br><span class="muted">Provider checked in</span></div><button class="obtn">Open Activity Log</button></div>';
+    // Tasks + stage tracker
+    h+='<div class="sec"><h3>Tasks</h3><div class="stagewrap">'+stagesHTML(t.stages)+'</div>'+
+       '<table class="tasktbl"><thead><tr><th>Task</th><th>Status</th><th>Assignee</th><th>Priority</th></tr></thead><tbody><tr class="hl"><td>'+t.task[0]+'</td><td><span class="todo-dot">'+t.task[1]+'</span></td><td>'+t.task[2]+'</td><td>'+t.task[3]+'</td></tr></tbody></table></div>';
+    // Details tabs + Timeline
+    h+='<div class="sec"><div class="cols">';
+    // left: details
+    h+='<div class="card tabgroup"><div class="dt-tabs"><span class="tb on" data-tb="details" onclick="showTab(\'dt\',\'details\',this)">🎫</span><span class="tb" data-tb="divisions" onclick="showTab(\'dt\',\'divisions\',this)">▨</span><span class="tb" data-tb="att" onclick="showTab(\'dt\',\'att\',this)">📎</span></div>';
+    // details panel
+    h+='<div class="tabpanel on" data-key="details"><div class="dl" style="padding-top:14px"><h3 style="margin:0 0 6px 14px;color:var(--link);font-size:16px">Ticket Details</h3>';
+    Object.keys(t.details).forEach(k=>{h+='<div class="row"><div class="k">'+k+'</div><div class="v">'+t.details[k]+'</div></div>';});
+    if(t.kind==='event'){const e=t.event; const m=(k,v)=>'<div><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
+      h+='<div class="evcard">'+
+         '<div class="ev-hdr"><div class="ev-ico">❄️</div><div class="ev-htxt"><div class="ev-storm">'+e.storm+'</div><div class="ev-win">'+e.start+'  →  '+e.end+'</div></div>'+
+           '<div class="ev-badges"><span class="evbadge">'+e.catType+' · '+e.precip+'</span><span class="evbadge ghost">'+e.eventId+'</span></div></div>'+
+         '<div class="ev-stats"><div class="ev-stat"><div class="sl">Expected snowfall</div><div class="sv snow">'+e.expected+'</div></div>'+
+           '<div class="ev-stat"><div class="sl">Actual (certified)</div><div class="sv">'+e.actual+'</div></div>'+
+           '<div class="ev-stat"><div class="sl">Coverage</div><div class="sv">'+e.coverage+'</div></div></div>'+
+         '<div class="ev-meta">'+m('Region',e.region)+m('Event type',e.catType+' — '+e.precip)+m('Declared by',e.declaredBy+' · '+e.declaredMode)+m('CatEvent ID',e.eventId)+'</div>'+
+         '<div class="ev-plan"><span class="ev-plan-lbl">📄 Event plan</span><span class="pdf"><span class="ic">PDF</span> '+e.plan.pdf+'</span><a>🔗 '+e.plan.link+'</a></div>'+
+       '</div>';}
+    h+='</div></div>';
+    // divisions panel
+    h+='<div class="tabpanel" data-key="divisions"><div class="dl" style="padding-top:14px"><div class="row"><div class="k">Last Updated On</div><div class="v">Jan 25, 2026 08:00 EST</div></div><div class="row"><div class="k">Last Update By</div><div class="v">Scheduler</div></div></div></div>';
+    // attachments panel (event plan PDF)
+    h+='<div class="tabpanel" data-key="att"><div style="padding:14px 0 6px"><h3 style="margin:0 0 6px 14px;color:var(--link);font-size:16px">Attachments</h3>';
+    if(t.kind==='event'){h+='<div class="att"><span class="ic">PDF</span> '+t.event.plan.pdf+' <span class="faint" style="margin-left:auto">Event plan · 240 KB</span></div>';}
+    h+='<div class="att"><span class="ic" style="color:#2a7de1">IMG</span> Before / During / After photos (11) <span class="faint" style="margin-left:auto">from visits</span></div></div></div>';
+    h+='</div>'; // end left card
+    // right: timeline / comms
+    h+='<div class="card tabgroup"><div class="tl-tabs"><span class="tb on" data-tb="tl" onclick="showTab(\'tl\',\'tl\',this)">Timeline</span><span class="tb" data-tb="ch" onclick="showTab(\'tl\',\'ch\',this)">Communication History</span></div>'+
+       '<div class="tabpanel on" data-key="tl">'+timelineHTML(t.timeline)+'</div>'+
+       '<div class="tabpanel" data-key="ch"><div style="padding:24px;color:var(--muted);font-size:13px">No customer communications yet.</div></div></div>';
+    h+='</div></div>'; // end cols + sec
+    h+='</div>'; // dbody
+    return h;
+  }
+</script>
+<div class="tipbar">Click a row → full drawer · click an associate → drawer on top · tabs switch · Esc/Close to go back</div>
+</body>
+</html>
